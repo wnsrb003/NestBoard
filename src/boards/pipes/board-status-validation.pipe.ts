@@ -8,7 +8,6 @@ export class BoardStatusValidationPipe implements PipeTransform {
     ]
 
     transform(value: any, metadata: ArgumentMetadata){
-        console.log(`value : ${JSON.stringify(value)}, metadata: ${JSON.stringify(metadata)}`);
         // value는 대문자로 치환
         value = value.toUpperCase();
         // 상태는 PUBLIC OR PRIVATE
