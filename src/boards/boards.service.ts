@@ -5,6 +5,7 @@ import { CreateBoardDto } from './dto/create-board.dto';
 import { Board } from './boards.entity';
 import { BoardsRepository } from './boards.repository';
 import { InjectRepository } from '@nestjs/typeorm';
+import { User } from 'src/auth/user.entity';
 
 @Injectable()
 export class BoardsService {
@@ -20,11 +21,17 @@ export class BoardsService {
     //     return this.boards;
     // }
     async getAllBoards(): Promise<Board[]>{
-        const found = await this.boardsRepository.find();
+        const found = await this.boardsRepository.getAllBoards();
         if (!found) throw new NotFoundException('없어');
         return found;
     }
 
+    async getMyBoards(user: User): Promise<Board[]>{
+        const query = this.boardsRepository.createQueryBuilder('board');
+        query.where('board.userId = :userId', { userId: user.id });
+        const boards = await query.getMany();
+        return boards;
+    }
     // getBoardById(id: string): Board{
     //     const aBoard = this.boards.find((aBoard) => aBoard.id === id)
     //     if (!aBoard) throw new NotFoundException('찾을 수 없어');
@@ -49,12 +56,13 @@ export class BoardsService {
     //     this.boards.push(newBoard);
     //     return newBoard;
     // }
-    async createBoard(createBoardDto: CreateBoardDto): Promise<Board>{
+    async createBoard(createBoardDto: CreateBoardDto, user: User): Promise<Board>{
         const {title, description} = createBoardDto;
         const newBoard = this.boardsRepository.create({
             title,
             description,
-            status: BoardStatus.PUBLIC
+            status: BoardStatus.PUBLIC,
+            user: user
         })
 
         await this.boardsRepository.save(newBoard);
@@ -66,8 +74,8 @@ export class BoardsService {
     //     if (!aBoard) throw new NotFoundException('삭제하려는 게시물이 없어');
     //     this.boards = this.boards.filter((aBoard) => aBoard.id !== id);
     // }
-    async deleteBoard(id: number): Promise<void>{
-        const found = await this.boardsRepository.delete(id);
+    async deleteBoard(id: number, user: User): Promise<void>{
+        const found = await this.boardsRepository.delete({id, user});
         if (!found.affected) throw new NotFoundException('삭제하려는 게시물이 없어');
     }
 
